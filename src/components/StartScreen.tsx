@@ -170,7 +170,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
           <Button
             size="lg"
             onClick={handleStart}
-            className="h-14 px-8 text-lg bg-gradient-to-r from-primary via-purple-500 to-pink-500 hover:opacity-90"
+            className="px-8 text-lg bg-gradient-to-r from-primary via-purple-500 to-pink-500 hover:opacity-90"
           >
             <Play className="mr-2 h-5 w-5" />
             Start Game

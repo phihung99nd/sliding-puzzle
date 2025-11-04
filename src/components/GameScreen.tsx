@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import type { PuzzleSettings, PuzzleState } from '@/lib/puzzle'
 import { createSolvedPuzzle, shufflePuzzle, movePiece, isSolved, getPiecePosition, getImagePosition, getGridSize } from '@/lib/puzzle'
+import { cropImageToSquare } from '@/lib/utils'
 import { Timer, Move, RotateCcw } from 'lucide-react'
 
 interface GameScreenProps {
@@ -22,6 +23,8 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
   const [isGameOver, setIsGameOver] = useState(false)
   const [pieceSize, setPieceSize] = useState(0)
   const [gridContainerSize, setGridContainerSize] = useState(0)
+  const [croppedImageUrl, setCroppedImageUrl] = useState<string>(settings.imageUrl)
+  const [isImageLoading, setIsImageLoading] = useState(true)
 
   const timerIntervalRef = useRef<number | null>(null)
   const timeElapsedRef = useRef(0)
@@ -29,6 +32,22 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
   const gridContainerRef = useRef<HTMLDivElement>(null)
 
   const size = puzzleState.size
+
+  // Crop image to square when imageUrl changes
+  useEffect(() => {
+    setIsImageLoading(true)
+    cropImageToSquare(settings.imageUrl)
+      .then((croppedUrl) => {
+        setCroppedImageUrl(croppedUrl)
+        setIsImageLoading(false)
+      })
+      .catch((error) => {
+        console.error('Failed to crop image:', error)
+        // Fallback to original image if cropping fails
+        setCroppedImageUrl(settings.imageUrl)
+        setIsImageLoading(false)
+      })
+  }, [settings.imageUrl])
 
   // Calculate grid size based on viewport
   const calculateGridSize = useCallback(() => {
@@ -229,7 +248,7 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
           <motion.div
             ref={gridContainerRef}
             layout
-            className="grid bg-card rounded-lg border-2 border-border p-4 shrink-0 overflow-hidden"
+            className="grid bg-card rounded-lg border-2 border-border p-4 shrink-0 overflow-hidden relative"
             style={{
               gridTemplateColumns: `repeat(${size}, ${pieceSize}px)`,
               gridTemplateRows: `repeat(${size}, ${pieceSize}px)`,
@@ -239,7 +258,12 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
               aspectRatio: '1 / 1',
             }}
           >
-            {pieceSize > 0 && puzzleState.grid.map((row, rowIndex) =>
+            {isImageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-card/80 rounded-lg">
+                <p className="text-muted-foreground">Processing image...</p>
+              </div>
+            )}
+            {pieceSize > 0 && !isImageLoading && puzzleState.grid.map((row, rowIndex) =>
               row.map((value, colIndex) => {
                 if (value === 0) {
                   return (
@@ -281,7 +305,7 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
                       height: `${pieceSize}px`,
                       minWidth: `${pieceSize}px`,
                       minHeight: `${pieceSize}px`,
-                      backgroundImage: `url(${settings.imageUrl})`,
+                      backgroundImage: `url(${croppedImageUrl})`,
                       backgroundSize: `${size * 100}%`,
                       backgroundPositionX,
                       backgroundPositionY,
@@ -309,7 +333,7 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
                   }}
                 >
                   <img
-                    src={settings.imageUrl}
+                    src={croppedImageUrl}
                     alt="Reference"
                     className="w-full h-full object-contain"
                   />

@@ -97,11 +97,9 @@ export function ResultScreen({
               </CardHeader>
               <CardContent>
                 <p className="text-4xl font-bold">{slidesTaken}</p>
-                {settings.slideLimit && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Move limit: {settings.slideLimit}
-                  </p>
-                )}
+                <p className="h-5 text-sm text-muted-foreground mt-2">
+                  {settings.slideLimit && <>Move limit: {settings.slideLimit}</>}
+                </p>
               </CardContent>
             </Card>
           </motion.div>
@@ -139,7 +137,7 @@ export function ResultScreen({
           <Button
             size="lg"
             onClick={onPlayAgain}
-            className="h-14 px-8 text-lg bg-gradient-to-r from-primary via-purple-500 to-pink-500 hover:opacity-90"
+            className="px-8 bg-gradient-to-r from-primary via-purple-500 to-pink-500 hover:opacity-90"
           >
             Play Again
           </Button>

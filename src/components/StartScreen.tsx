@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { PuzzleSettings, Difficulty } from '@/lib/puzzle'
+import { getTimeLimit } from '@/lib/puzzle'
 import { Play } from 'lucide-react'
 
 interface StartScreenProps {
@@ -29,21 +30,23 @@ const DEFAULT_IMAGES = [
 
 export function StartScreen({ onStart }: StartScreenProps) {
   const [difficulty, setDifficulty] = useState<Difficulty>('3x3')
-  const [timeLimitEnabled, setTimeLimitEnabled] = useState(false)
-  const [timeLimit, setTimeLimit] = useState(300) // 5 minutes default
-  const [slideLimitEnabled, setSlideLimitEnabled] = useState(false)
-  const [slideLimit, setSlideLimit] = useState(100)
+  const [timeLimitEnabled, setTimeLimitEnabled] = useState(true)
   const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGES[0])
   const [customImageUrl, setCustomImageUrl] = useState('')
 
   const handleStart = () => {
     const settings: PuzzleSettings = {
       difficulty,
-      timeLimit: timeLimitEnabled ? timeLimit : null,
-      slideLimit: slideLimitEnabled ? slideLimit : null,
+      timeLimit: timeLimitEnabled ? getTimeLimit(difficulty) : null,
+      slideLimit: null,
       imageUrl: customImageUrl || imageUrl,
     }
     onStart(settings)
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    return mins === 1 ? '1 minute' : `${mins} minutes`
   }
 
   return (
@@ -91,6 +94,22 @@ export function StartScreen({ onStart }: StartScreenProps) {
                   <SelectItem value="6x6">6x6 (Expert)</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="pt-2 border-t space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="time-limit" className="text-sm text-muted-foreground">Enable Time Limit</Label>
+                  <Switch
+                    id="time-limit"
+                    checked={timeLimitEnabled}
+                    onCheckedChange={setTimeLimitEnabled}
+                  />
+                </div>
+                {timeLimitEnabled && (
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm text-muted-foreground">Time Limit</Label>
+                    <span className="text-sm font-semibold">{formatTime(getTimeLimit(difficulty))}</span>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -138,72 +157,6 @@ export function StartScreen({ onStart }: StartScreenProps) {
                   }}
                 />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Time Limit</CardTitle>
-              <CardDescription>Set a time limit for solving</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="time-limit"
-                  checked={timeLimitEnabled}
-                  onCheckedChange={setTimeLimitEnabled}
-                />
-                <Label htmlFor="time-limit">Enable time limit</Label>
-              </div>
-              {timeLimitEnabled && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-2"
-                >
-                  <Label htmlFor="time-value">Time (seconds)</Label>
-                  <Input
-                    id="time-value"
-                    type="number"
-                    min="30"
-                    value={timeLimit}
-                    onChange={(e) => setTimeLimit(parseInt(e.target.value) || 300)}
-                  />
-                </motion.div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Slide Limit</CardTitle>
-              <CardDescription>Set maximum number of moves</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="slide-limit"
-                  checked={slideLimitEnabled}
-                  onCheckedChange={setSlideLimitEnabled}
-                />
-                <Label htmlFor="slide-limit">Enable slide limit</Label>
-              </div>
-              {slideLimitEnabled && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-2"
-                >
-                  <Label htmlFor="slide-value">Maximum slides</Label>
-                  <Input
-                    id="slide-value"
-                    type="number"
-                    min="10"
-                    value={slideLimit}
-                    onChange={(e) => setSlideLimit(parseInt(e.target.value) || 100)}
-                  />
-                </motion.div>
-              )}
             </CardContent>
           </Card>
         </div>

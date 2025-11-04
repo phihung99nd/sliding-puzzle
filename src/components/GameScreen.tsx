@@ -20,13 +20,89 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
   const [slidesTaken, setSlidesTaken] = useState(0)
   const [timeElapsed, setTimeElapsed] = useState(0)
   const [isGameOver, setIsGameOver] = useState(false)
-  const [movedPiece, setMovedPiece] = useState<{ row: number; col: number } | null>(null)
+  const [pieceSize, setPieceSize] = useState(0)
+  const [gridContainerSize, setGridContainerSize] = useState(0)
 
   const timerIntervalRef = useRef<number | null>(null)
   const timeElapsedRef = useRef(0)
   const startTimeRef = useRef<number>(Date.now())
+  const gridContainerRef = useRef<HTMLDivElement>(null)
 
   const size = puzzleState.size
+
+  // Calculate grid size based on viewport
+  const calculateGridSize = useCallback(() => {
+    // Get available viewport dimensions
+    const viewportWidth = window.innerWidth - 6
+    const viewportHeight = window.innerHeight
+
+    // Estimate space used by other elements
+    // Header: 64px height
+    // Padding to avoid header: 32px
+    // Stats cards: 126px height (including margins)
+    // Quit button: 60px height (including margins)
+    const reservedHeight = viewportWidth >= 768 ? 282 : 0
+    const reservedWidth = viewportWidth >= 768 ? 346 : 32 // More space on desktop due to side-by-side layout
+
+    // Available space for grid
+    const availableWidth = viewportWidth - reservedWidth
+    const availableHeight = viewportHeight - reservedHeight
+
+    // Account for grid container padding (16px * 2 = 32px)
+    const containerPadding = 32
+    // Gap between pieces (2px * (size - 1))
+    const totalGap = 2 * (size - 1)
+
+    // Border width (2px * 2 = 4px)
+    const borderWidth = 4
+
+    // Calculate max size considering both width and height
+    // Ensure square aspect ratio
+    const maxSizeByWidth = Math.floor((availableWidth - containerPadding - totalGap - borderWidth) / size)
+    const maxSizeByHeight = Math.floor((availableHeight - containerPadding - totalGap - borderWidth) / size)
+
+    // Use the smaller dimension to ensure it fits in viewport
+    const calculatedPieceSize = Math.max(20, Math.min(maxSizeByWidth, maxSizeByHeight))
+
+    // Calculate total grid container size (including padding)
+    const calculatedGridSize = calculatedPieceSize * size + totalGap + containerPadding + borderWidth
+
+    setPieceSize(calculatedPieceSize)
+    setGridContainerSize(calculatedGridSize)
+    console.log({viewportWidth, viewportHeight, availableWidth, availableHeight, containerPadding, totalGap, borderWidth, maxSizeByWidth, maxSizeByHeight, calculatedPieceSize, calculatedGridSize})
+  }, [size])
+
+  // Set up resize listeners
+  useEffect(() => {
+    // Initial calculation
+    calculateGridSize()
+
+    // Add window resize listeners
+    window.addEventListener('resize', calculateGridSize)
+    window.addEventListener('orientationchange', calculateGridSize)
+
+    // Recalculate after a short delay to ensure DOM is ready
+    const timeoutId = setTimeout(calculateGridSize, 100)
+
+    return () => {
+      window.removeEventListener('resize', calculateGridSize)
+      window.removeEventListener('orientationchange', calculateGridSize)
+      clearTimeout(timeoutId)
+    }
+  }, [calculateGridSize])
+
+  // Set up ResizeObserver when container becomes available
+  useEffect(() => {
+    const containerElement = gridContainerRef.current
+    if (!containerElement) return
+
+    const resizeObserver = new ResizeObserver(calculateGridSize)
+    resizeObserver.observe(containerElement)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [calculateGridSize])
 
   useEffect(() => {
     if (isGameOver) {
@@ -71,11 +147,6 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
     }
   }, [puzzleState, slidesTaken, isGameOver, onComplete])
 
-  useEffect(() => {
-    if (settings.slideLimit && slidesTaken >= settings.slideLimit && !isGameOver) {
-      setIsGameOver(true)
-    }
-  }, [slidesTaken, settings.slideLimit, isGameOver])
 
   const handlePieceClick = useCallback(
     (row: number, col: number) => {
@@ -85,8 +156,6 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
       if (newState) {
         setPuzzleState(newState)
         setSlidesTaken((prev) => prev + 1)
-        setMovedPiece({ row, col })
-        setTimeout(() => setMovedPiece(null), 300)
       }
     },
     [puzzleState, isGameOver]
@@ -99,19 +168,18 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
   }
 
   const remainingTime = settings.timeLimit ? Math.max(0, settings.timeLimit - timeElapsed) : null
-  const remainingSlides = settings.slideLimit ? Math.max(0, settings.slideLimit - slidesTaken) : null
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 max-w-6xl">
       <div className="space-y-6">
         {/* Game Stats */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          className="grid grid-cols-1 md:grid-cols-3 gap-4"
         >
           <Card>
-            <CardContent className="pt-6">
+            <CardContent>
               <div className="flex items-center space-x-2">
                 <Timer className="h-5 w-5 text-primary" />
                 <div>
@@ -122,7 +190,7 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent>
               <div className="flex items-center space-x-2">
                 <Move className="h-5 w-5 text-primary" />
                 <div>
@@ -134,7 +202,7 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
           </Card>
           {remainingTime !== null && (
             <Card>
-              <CardContent className="pt-6">
+              <CardContent>
                 <div>
                   <p className="text-sm text-muted-foreground">Time Remaining</p>
                   <p
@@ -143,22 +211,6 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
                     }`}
                   >
                     {formatTime(remainingTime)}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          {remainingSlides !== null && (
-            <Card>
-              <CardContent className="pt-6">
-                <div>
-                  <p className="text-sm text-muted-foreground">Moves Remaining</p>
-                  <p
-                    className={`text-2xl font-bold ${
-                      remainingSlides < 10 ? 'text-destructive' : ''
-                    }`}
-                  >
-                    {remainingSlides}
                   </p>
                 </div>
               </CardContent>
@@ -174,25 +226,32 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
           className="flex flex-col md:flex-row items-center justify-center gap-6"
         >
           {/* Puzzle Grid */}
-          <div
-            className="grid gap-2 p-4 bg-card rounded-lg border-2 border-border"
+          <motion.div
+            ref={gridContainerRef}
+            layout
+            className="grid bg-card rounded-lg border-2 border-border p-4 shrink-0 overflow-hidden"
             style={{
-              gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
-              width: `${size * 120}px`,
+              gridTemplateColumns: `repeat(${size}, ${pieceSize}px)`,
+              gridTemplateRows: `repeat(${size}, ${pieceSize}px)`,
+              gap: '2px',
+              width: gridContainerSize > 0 ? `${gridContainerSize}px` : 'auto',
+              height: gridContainerSize > 0 ? `${gridContainerSize}px` : 'auto',
+              aspectRatio: '1 / 1',
             }}
           >
-            {puzzleState.grid.map((row, rowIndex) =>
+            {pieceSize > 0 && puzzleState.grid.map((row, rowIndex) =>
               row.map((value, colIndex) => {
-                const pieceSize = `${Math.floor((size * 120 - 32 - (size - 1) * 8) / size)}px`
-                
                 if (value === 0) {
                   return (
-                    <div
+                    <motion.div
                       key={`empty-${rowIndex}-${colIndex}`}
-                      className="bg-muted rounded-lg border-2 border-dashed border-border"
+                      layoutId={`empty-${rowIndex}-${colIndex}`}
+                      className="bg-muted rounded-lg shrink-0"
                       style={{
-                        width: pieceSize,
-                        height: pieceSize,
+                        width: `${pieceSize}px`,
+                        height: `${pieceSize}px`,
+                        minWidth: `${pieceSize}px`,
+                        minHeight: `${pieceSize}px`,
                       }}
                     />
                   )
@@ -201,62 +260,58 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
                 const { row: targetRow, col: targetCol } = getPiecePosition(value, size)
                 const { backgroundPositionX, backgroundPositionY } = getImagePosition(
                   targetRow,
-                  targetCol
+                  targetCol,
+                  size
                 )
-
-                const isMoved = movedPiece?.row === rowIndex && movedPiece?.col === colIndex
 
                 return (
                   <motion.button
                     key={`piece-${value}`}
+                    layoutId={`piece-${value}`}
                     layout
-                    initial={false}
-                    animate={
-                      isMoved
-                        ? { scale: [0.95, 1], rotate: [0, -3, 3, -3, 0] }
-                        : { scale: 1, rotate: 0 }
-                    }
-                    transition={{ 
-                      duration: 0.2,
-                      layout: { duration: 0.3 }
+                    transition={{
+                      layout: { duration: 0.2, ease: 'easeOut' }
                     }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ filter: 'brightness(1.3)' }}
                     onClick={() => handlePieceClick(rowIndex, colIndex)}
                     disabled={isGameOver}
-                    className="rounded-lg overflow-hidden border-2 border-border cursor-pointer hover:border-primary hover:shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-lg overflow-hidden cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
                     style={{
-                      width: pieceSize,
-                      height: pieceSize,
+                      width: `${pieceSize}px`,
+                      height: `${pieceSize}px`,
+                      minWidth: `${pieceSize}px`,
+                      minHeight: `${pieceSize}px`,
                       backgroundImage: `url(${settings.imageUrl})`,
                       backgroundSize: `${size * 100}%`,
                       backgroundPositionX,
                       backgroundPositionY,
+                      backgroundRepeat: 'no-repeat',
                     }}
                   />
                 )
               })
             )}
-          </div>
+          </motion.div>
 
           {/* Reference Image */}
-          <Card className="w-full md:w-auto">
-            <CardContent className="pt-6">
-              <div className="space-y-2">
+          <Card className="w-auto">
+            <CardContent>
+              <div className="space-y-2 flex flex-col items-center justify-center">
                 <h3 className="text-sm font-semibold text-muted-foreground text-center">
                   Reference Image
                 </h3>
                 <div
-                  className="rounded-lg overflow-hidden border-2 border-border shadow-lg"
+                  className="rounded-lg overflow-hidden border-2 border-border shadow-lg bg-muted flex items-center justify-center"
                   style={{
-                    width: `${size * 120}px`,
-                    height: `${size * 120}px`,
+                    width: `${Math.floor(size * 80)}px`,
+                    height: `${Math.floor(size * 80)}px`,
+                    maxWidth: '100%',
                   }}
                 >
                   <img
                     src={settings.imageUrl}
                     alt="Reference"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
               </div>
@@ -288,8 +343,6 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
               <p className="text-muted-foreground">
                 {settings.timeLimit && timeElapsedRef.current >= settings.timeLimit
                   ? 'Time ran out!'
-                  : settings.slideLimit && slidesTaken >= settings.slideLimit
-                  ? 'You ran out of moves!'
                   : 'Better luck next time!'}
               </p>
               <Button onClick={onQuit} className="w-full">

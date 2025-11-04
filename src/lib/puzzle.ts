@@ -18,6 +18,16 @@ export function getGridSize(difficulty: Difficulty): number {
   return parseInt(difficulty.split('x')[0])
 }
 
+export function getTimeLimit(difficulty: Difficulty): number {
+  const timeLimits: Record<Difficulty, number> = {
+    '3x3': 180,  // 3 minutes
+    '4x4': 300,  // 5 minutes
+    '5x5': 480,  // 8 minutes
+    '6x6': 900,  // 15 minutes
+  }
+  return timeLimits[difficulty]
+}
+
 export function createSolvedPuzzle(size: number): PuzzleState {
   const grid: number[][] = []
   let value = 1
@@ -37,7 +47,7 @@ export function createSolvedPuzzle(size: number): PuzzleState {
 }
 
 export function shufflePuzzle(state: PuzzleState, moves: number = 1000): PuzzleState {
-  let currentState = { ...state, grid: state.grid.map((row) => [...row]) }
+  const currentState = { ...state, grid: state.grid.map((row) => [...row]) }
   const directions = [
     { row: -1, col: 0 }, // Up
     { row: 1, col: 0 }, // Down
@@ -133,13 +143,14 @@ export function getPiecePosition(value: number, size: number): { row: number; co
 
 export function getImagePosition(
   row: number,
-  col: number
+  col: number,
+  size: number
 ): { backgroundPositionX: string; backgroundPositionY: string } {
   // For background-size: size * 100%, each piece is 100% of container
   // We need to shift the background to show the correct tile
   // Negative values move the background left/up to reveal the correct portion
-  const colPercent = -col * 100
-  const rowPercent = -row * 100
+  const colPercent = col * 100 / (size - 1)
+  const rowPercent = row * 100 / (size - 1)
   return {
     backgroundPositionX: `${colPercent}%`,
     backgroundPositionY: `${rowPercent}%`,

@@ -5,6 +5,7 @@ import { StartScreen } from '@/components/StartScreen'
 import { GameScreen } from '@/components/GameScreen'
 import { ResultScreen } from '@/components/ResultScreen'
 import type { PuzzleSettings } from '@/lib/puzzle'
+import { Analytics } from "@vercel/analytics/react"
 
 type Screen = 'start' | 'game' | 'result'
 
@@ -41,6 +42,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <Analytics />
       <div className="min-h-screen bg-background flex flex-col">
         <Header onHome={handleQuit} />
         <main className="flex-1 py-8">

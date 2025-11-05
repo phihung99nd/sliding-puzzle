@@ -1,34 +1,69 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { ThemeProvider } from '@/contexts/ThemeContext'
+import { Header } from '@/components/Header'
+import { StartScreen } from '@/components/StartScreen'
+import { GameScreen } from '@/components/GameScreen'
+import { ResultScreen } from '@/components/ResultScreen'
+import type { PuzzleSettings } from '@/lib/puzzle'
+
+type Screen = 'start' | 'game' | 'result'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [screen, setScreen] = useState<Screen>('start')
+  const [settings, setSettings] = useState<PuzzleSettings | null>(null)
+  const [gameResult, setGameResult] = useState<{ timeTaken: number; slidesTaken: number } | null>(
+    null
+  )
+
+  const handleStart = (newSettings: PuzzleSettings) => {
+    setSettings(newSettings)
+    setScreen('game')
+    setGameResult(null)
+  }
+
+  const handleGameComplete = (timeTaken: number, slidesTaken: number) => {
+    setGameResult({ timeTaken, slidesTaken })
+    setScreen('result')
+  }
+
+  const handleQuit = () => {
+    setScreen('start')
+    setSettings(null)
+    setGameResult(null)
+  }
+
+  const handlePlayAgain = () => {
+    if (settings) {
+      setScreen('game')
+      setGameResult(null)
+    }
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <ThemeProvider>
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header onHome={handleQuit} />
+        <main className="flex-1 py-8">
+          {screen === 'start' && <StartScreen onStart={handleStart} />}
+          {screen === 'game' && settings && (
+            <GameScreen
+              settings={settings}
+              onComplete={handleGameComplete}
+              onQuit={handleQuit}
+            />
+          )}
+          {screen === 'result' && settings && gameResult && (
+            <ResultScreen
+              settings={settings}
+              timeTaken={gameResult.timeTaken}
+              slidesTaken={gameResult.slidesTaken}
+              onPlayAgain={handlePlayAgain}
+              onHome={handleQuit}
+            />
+          )}
+        </main>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </ThemeProvider>
   )
 }
 

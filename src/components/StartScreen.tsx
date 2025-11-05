@@ -22,6 +22,12 @@ import illustration3 from '@/assets/illustrations/3.jpg'
 import illustration4 from '@/assets/illustrations/4.jpg'
 import illustration5 from '@/assets/illustrations/5.jpg'
 import illustration6 from '@/assets/illustrations/6.jpg'
+import god1 from '@/assets/god/1.jpg'
+import god2 from '@/assets/god/2.jpg'
+import god3 from '@/assets/god/3.jpg'
+import god4 from '@/assets/god/4.jpg'
+import god5 from '@/assets/god/5.jpg'
+import god6 from '@/assets/god/6.jpg'
 
 interface StartScreenProps {
   onStart: (settings: PuzzleSettings) => void
@@ -36,15 +42,36 @@ const DEFAULT_IMAGES = [
   illustration6,
 ]
 
+const GOD_IMAGES = [
+  god1,
+  god2,
+  god3,
+  god4,
+  god5,
+  god6,
+]
+
 export function StartScreen({ onStart }: StartScreenProps) {
   const [difficulty, setDifficulty] = useState<Difficulty>('3x3')
   const [timeLimitEnabled, setTimeLimitEnabled] = useState(true)
-  const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGES[0])
+  const isGodMode = difficulty === 'god'
+  const availableImages = isGodMode ? GOD_IMAGES : DEFAULT_IMAGES
+  const [imageUrl, setImageUrl] = useState(availableImages[0])
   const [customImageUrl, setCustomImageUrl] = useState('')
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [croppedCustomUrl, setCroppedCustomUrl] = useState<string | null>(null)
   const [customUrlError, setCustomUrlError] = useState<string | null>(null)
   const [isCroppingCustomUrl, setIsCroppingCustomUrl] = useState(false)
+
+  // Reset image selection when switching to/from god mode
+  useEffect(() => {
+    const images = difficulty === 'god' ? GOD_IMAGES : DEFAULT_IMAGES
+    setImageUrl(images[0])
+    setCustomImageUrl('')
+    setUploadedImage(null)
+    setCroppedCustomUrl(null)
+    setCustomUrlError(null)
+  }, [difficulty])
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -69,7 +96,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
     if (customImageUrl) {
       setImageUrl(customImageUrl)
     } else {
-      setImageUrl(DEFAULT_IMAGES[0])
+      setImageUrl(availableImages[0])
     }
   }
 
@@ -109,7 +136,8 @@ export function StartScreen({ onStart }: StartScreenProps) {
       difficulty,
       timeLimit: timeLimitEnabled ? getTimeLimit(difficulty) : null,
       slideLimit: null,
-      imageUrl: uploadedImage || croppedCustomUrl || customImageUrl || imageUrl,
+      // In god mode, only use predefined images (ignore custom uploads/URLs)
+      imageUrl: isGodMode ? imageUrl : (uploadedImage || croppedCustomUrl || customImageUrl || imageUrl),
     }
     onStart(settings)
   }
@@ -158,10 +186,11 @@ export function StartScreen({ onStart }: StartScreenProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="3x3">3x3 (Easy)</SelectItem>
-                  <SelectItem value="4x4">4x4 (Medium)</SelectItem>
-                  <SelectItem value="5x5">5x5 (Hard)</SelectItem>
-                  <SelectItem value="6x6">6x6 (Expert)</SelectItem>
+                  <SelectItem value="3x3">Easy (3x3)</SelectItem>
+                  <SelectItem value="4x4">Medium (4x4)</SelectItem>
+                  <SelectItem value="5x5">Hard (5x5)</SelectItem>
+                  <SelectItem value="6x6">Expert (6x6)</SelectItem>
+                  <SelectItem value="god">For Dzuong =)))</SelectItem>
                 </SelectContent>
               </Select>
               <div className="pt-2 border-t space-y-3">
@@ -190,7 +219,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-2">
-                {DEFAULT_IMAGES.map((url, index) => (
+                {availableImages.map((url, index) => (
                   <motion.button
                     key={index}
                     whileHover={{ scale: 1.05 }}
@@ -216,8 +245,9 @@ export function StartScreen({ onStart }: StartScreenProps) {
                   </motion.button>
                 ))}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="custom-image">Or use custom image URL</Label>
+              {!isGodMode && (
+                <div className="space-y-2">
+                  <Label htmlFor="custom-image">Or use custom image URL</Label>
                 <div className="flex gap-2">
                   <Input
                     id="custom-image"
@@ -230,7 +260,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
                         setImageUrl(url)
                         setUploadedImage(null)
                       } else {
-                        setImageUrl(DEFAULT_IMAGES[0])
+                        setImageUrl(availableImages[0])
                         setCroppedCustomUrl(null)
                         setCustomUrlError(null)
                       }
@@ -297,10 +327,11 @@ export function StartScreen({ onStart }: StartScreenProps) {
                 {customImageUrl && customUrlError && (
                   <div className="mt-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
                     <p className="text-sm text-destructive font-medium">Error loading image</p>
-                    <p className="text-sm text-destructive/80 mt-1">{customUrlError}</p>
+                    <p className="text-sm text-destructive/80 mt-1">{customUrlError}                    </p>
                   </div>
                 )}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

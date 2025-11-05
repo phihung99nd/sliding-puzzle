@@ -1,4 +1,4 @@
-export type Difficulty = '3x3' | '4x4' | '5x5' | '6x6'
+export type Difficulty = '3x3' | '4x4' | '5x5' | '6x6' | 'god'
 
 export interface PuzzleSettings {
   difficulty: Difficulty
@@ -15,6 +15,7 @@ export interface PuzzleState {
 }
 
 export function getGridSize(difficulty: Difficulty): number {
+  if (difficulty === 'god') return 6
   return parseInt(difficulty.split('x')[0])
 }
 
@@ -24,6 +25,7 @@ export function getTimeLimit(difficulty: Difficulty): number {
     '4x4': 90,  // 1.5 minutes
     '5x5': 150,  // 2.5 minutes
     '6x6': 240,  // 4 minutes
+    'god': 240,  // 4 minutes (same as 6x6)
   }
   return timeLimits[difficulty]
 }

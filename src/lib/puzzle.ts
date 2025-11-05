@@ -83,6 +83,29 @@ export function shufflePuzzle(state: PuzzleState, moves: number = 1000): PuzzleS
     currentState.emptyCol = newCol
   }
 
+  // Move empty space to bottom right corner
+  const targetRow = currentState.size - 1
+  const targetCol = currentState.size - 1
+
+  // Move empty space down first, then right
+  while (currentState.emptyRow < targetRow) {
+    const newRow = currentState.emptyRow + 1
+    const temp = currentState.grid[currentState.emptyRow][currentState.emptyCol]
+    currentState.grid[currentState.emptyRow][currentState.emptyCol] =
+      currentState.grid[newRow][currentState.emptyCol]
+    currentState.grid[newRow][currentState.emptyCol] = temp
+    currentState.emptyRow = newRow
+  }
+
+  while (currentState.emptyCol < targetCol) {
+    const newCol = currentState.emptyCol + 1
+    const temp = currentState.grid[currentState.emptyRow][currentState.emptyCol]
+    currentState.grid[currentState.emptyRow][currentState.emptyCol] =
+      currentState.grid[currentState.emptyRow][newCol]
+    currentState.grid[currentState.emptyRow][newCol] = temp
+    currentState.emptyCol = newCol
+  }
+
   return currentState
 }
 

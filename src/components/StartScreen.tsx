@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/select'
 import type { PuzzleSettings, Difficulty } from '@/lib/puzzle'
 import { getTimeLimit } from '@/lib/puzzle'
-import { Play } from 'lucide-react'
+import { cropImageToSquare } from '@/lib/utils'
+import { Play, Upload, Trash2 } from 'lucide-react'
 
 interface StartScreenProps {
   onStart: (settings: PuzzleSettings) => void
@@ -33,13 +34,75 @@ export function StartScreen({ onStart }: StartScreenProps) {
   const [timeLimitEnabled, setTimeLimitEnabled] = useState(true)
   const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGES[0])
   const [customImageUrl, setCustomImageUrl] = useState('')
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null)
+  const [croppedCustomUrl, setCroppedCustomUrl] = useState<string | null>(null)
+  const [customUrlError, setCustomUrlError] = useState<string | null>(null)
+  const [isCroppingCustomUrl, setIsCroppingCustomUrl] = useState(false)
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string
+        setUploadedImage(dataUrl)
+        setImageUrl(dataUrl)
+        setCustomImageUrl('')
+        setCroppedCustomUrl(null)
+        setCustomUrlError(null)
+      }
+      reader.readAsDataURL(file)
+    }
+    // Reset the input value so the same file can be selected again
+    event.target.value = ''
+  }
+
+  const handleDeleteUploadedImage = () => {
+    setUploadedImage(null)
+    if (customImageUrl) {
+      setImageUrl(customImageUrl)
+    } else {
+      setImageUrl(DEFAULT_IMAGES[0])
+    }
+  }
+
+  // Crop custom URL image to square when it changes
+  useEffect(() => {
+    if (!customImageUrl || uploadedImage) {
+      setCroppedCustomUrl(null)
+      setCustomUrlError(null)
+      setIsCroppingCustomUrl(false)
+      return
+    }
+
+    setIsCroppingCustomUrl(true)
+    setCustomUrlError(null)
+    
+    cropImageToSquare(customImageUrl)
+      .then((croppedUrl) => {
+        setCroppedCustomUrl(croppedUrl)
+        setIsCroppingCustomUrl(false)
+        setCustomUrlError(null)
+      })
+      .catch((error) => {
+        setIsCroppingCustomUrl(false)
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load image'
+        
+        if (errorMessage.includes('CORS')) {
+          setCustomUrlError('CORS error: Cannot process image from this origin. The image server may not allow cross-origin access. Please try uploading the image instead or use a different URL.')
+        } else {
+          setCustomUrlError(`${errorMessage}. Please check the URL or try uploading the image instead.`)
+        }
+        setCroppedCustomUrl(null)
+      })
+  }, [customImageUrl, uploadedImage])
 
   const handleStart = () => {
     const settings: PuzzleSettings = {
       difficulty,
       timeLimit: timeLimitEnabled ? getTimeLimit(difficulty) : null,
       slideLimit: null,
-      imageUrl: customImageUrl || imageUrl,
+      imageUrl: uploadedImage || croppedCustomUrl || customImageUrl || imageUrl,
     }
     onStart(settings)
   }
@@ -62,7 +125,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent"
+            className="text-[48px] font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent"
           >
             Sliding Puzzle Challenge
           </motion.h1>
@@ -128,9 +191,12 @@ export function StartScreen({ onStart }: StartScreenProps) {
                     onClick={() => {
                       setImageUrl(url)
                       setCustomImageUrl('')
+                      setUploadedImage(null)
+                      setCroppedCustomUrl(null)
+                      setCustomUrlError(null)
                     }}
                     className={`aspect-square rounded-lg overflow-hidden border-2 ${
-                      imageUrl === url && !customImageUrl
+                      imageUrl === url && !customImageUrl && !uploadedImage
                         ? 'border-primary ring-2 ring-primary'
                         : 'border-border'
                     }`}
@@ -145,17 +211,88 @@ export function StartScreen({ onStart }: StartScreenProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="custom-image">Or use custom image URL</Label>
-                <Input
-                  id="custom-image"
-                  placeholder="https://example.com/image.jpg"
-                  value={customImageUrl}
-                  onChange={(e) => {
-                    setCustomImageUrl(e.target.value)
-                    if (e.target.value) {
-                      setImageUrl(e.target.value)
-                    }
-                  }}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="custom-image"
+                    placeholder="https://example.com/image.jpg"
+                    value={customImageUrl}
+                    onChange={(e) => {
+                      const url = e.target.value
+                      setCustomImageUrl(url)
+                      if (url) {
+                        setImageUrl(url)
+                        setUploadedImage(null)
+                      } else {
+                        setImageUrl(DEFAULT_IMAGES[0])
+                        setCroppedCustomUrl(null)
+                        setCustomUrlError(null)
+                      }
+                    }}
+                    className="flex-1"
+                  />
+                  <input
+                    type="file"
+                    id="file-upload"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    className="shrink-0"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                </div>
+                {(uploadedImage || croppedCustomUrl) && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-muted-foreground">
+                        {uploadedImage ? 'Uploaded image preview:' : 'Custom URL image preview (cropped to square):'}
+                      </p>
+                      {uploadedImage && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleDeleteUploadedImage}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="aspect-square rounded-lg overflow-hidden border-2 border-primary ring-2 ring-primary max-w-xs relative">
+                      {uploadedImage ? (
+                        <img
+                          src={uploadedImage}
+                          alt="Uploaded preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        croppedCustomUrl && (
+                          <img
+                            src={croppedCustomUrl}
+                            alt="Custom URL preview (cropped)"
+                            className="w-full h-full object-cover"
+                          />
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+                {isCroppingCustomUrl && (
+                  <p className="text-sm text-muted-foreground mt-2">Processing image...</p>
+                )}
+                {customImageUrl && customUrlError && (
+                  <div className="mt-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                    <p className="text-sm text-destructive font-medium">Error loading image</p>
+                    <p className="text-sm text-destructive/80 mt-1">{customUrlError}</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

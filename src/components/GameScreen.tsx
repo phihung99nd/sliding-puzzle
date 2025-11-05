@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import type { PuzzleSettings, PuzzleState } from '@/lib/puzzle'
 import { createSolvedPuzzle, shufflePuzzle, movePiece, isSolved, getPiecePosition, getImagePosition, getGridSize } from '@/lib/puzzle'
 import { cropImageToSquare } from '@/lib/utils'
-import { Timer, Move, RotateCcw } from 'lucide-react'
+import { Timer, Move, RotateCcw, RefreshCw } from 'lucide-react'
 
 interface GameScreenProps {
   settings: PuzzleSettings
@@ -60,7 +60,9 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
     // Padding to avoid header: 32px
     // Stats cards: 126px height (including margins)
     // Quit button: 60px height (including margins)
-    const reservedHeight = viewportWidth >= 768 ? 282 : 0
+    // Bottom padding: 32px
+    // Total: 314px height
+    const reservedHeight = viewportWidth >= 768 ? 314 : 0
     const reservedWidth = viewportWidth >= 768 ? 346 : 32 // More space on desktop due to side-by-side layout
 
     // Available space for grid
@@ -180,6 +182,27 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
     [puzzleState, isGameOver]
   )
 
+  const handlePlayAgain = useCallback(() => {
+    // Clear any existing timer
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current)
+      timerIntervalRef.current = null
+    }
+    
+    // Reset puzzle state
+    const solved = createSolvedPuzzle(getGridSize(settings.difficulty))
+    setPuzzleState(shufflePuzzle(solved, 1000))
+    
+    // Reset game state
+    setSlidesTaken(0)
+    setTimeElapsed(0)
+    setIsGameOver(false)
+    
+    // Reset timer refs
+    timeElapsedRef.current = 0
+    startTimeRef.current = Date.now()
+  }, [settings.difficulty])
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -247,7 +270,6 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
           {/* Puzzle Grid */}
           <motion.div
             ref={gridContainerRef}
-            layout
             className="grid bg-card rounded-lg border-2 border-border p-4 shrink-0 overflow-hidden relative"
             style={{
               gridTemplateColumns: `repeat(${size}, ${pieceSize}px)`,
@@ -294,7 +316,9 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
                     layoutId={`piece-${value}`}
                     layout
                     transition={{
-                      layout: { duration: 0.2, ease: 'easeOut' }
+                      layout: {
+                        type: "spring", stiffness: 2000, damping: 20, mass: 1,
+                      }
                     }}
                     whileHover={{ filter: 'brightness(1.3)' }}
                     onClick={() => handlePieceClick(rowIndex, colIndex)}
@@ -369,9 +393,15 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
                   ? 'Time ran out!'
                   : 'Better luck next time!'}
               </p>
-              <Button onClick={onQuit} className="w-full">
-                Return to Start
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button onClick={handlePlayAgain} className="w-full">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Play Again
+                </Button>
+                <Button onClick={onQuit} variant="outline" className="w-full">
+                  Return to Start
+                </Button>
+              </div>
             </motion.div>
           </motion.div>
         )}

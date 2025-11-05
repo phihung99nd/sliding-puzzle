@@ -57,7 +57,7 @@ export async function cropImageToSquare(imageUrl: string): Promise<string> {
         
         // Convert to data URL
         resolve(canvas.toDataURL('image/png'))
-      } catch (error) {
+      } catch {
         // If canvas is tainted (CORS issue), reject with specific error
         reject(new Error('CORS error: Cannot process image from this origin'))
       }

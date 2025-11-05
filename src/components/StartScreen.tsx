@@ -16,17 +16,24 @@ import type { PuzzleSettings, Difficulty } from '@/lib/puzzle'
 import { getTimeLimit } from '@/lib/puzzle'
 import { cropImageToSquare } from '@/lib/utils'
 import { Play, Upload, Trash2 } from 'lucide-react'
+import illustration1 from '@/assets/illustrations/1.jpg'
+import illustration2 from '@/assets/illustrations/2.jpg'
+import illustration3 from '@/assets/illustrations/3.jpg'
+import illustration4 from '@/assets/illustrations/4.jpg'
+import illustration5 from '@/assets/illustrations/5.jpg'
+import illustration6 from '@/assets/illustrations/6.jpg'
 
 interface StartScreenProps {
   onStart: (settings: PuzzleSettings) => void
 }
 
 const DEFAULT_IMAGES = [
-  'https://images.unsplash.com/photo-1597589022928-bb4002c099ec?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&h=800&fit=crop',
+  illustration1,
+  illustration2,
+  illustration3,
+  illustration4,
+  illustration5,
+  illustration6,
 ]
 
 export function StartScreen({ onStart }: StartScreenProps) {
@@ -159,7 +166,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
               </Select>
               <div className="pt-2 border-t space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="time-limit" className="text-sm text-muted-foreground">Enable Time Limit</Label>
+                  <Label htmlFor="time-limit" className="text-sm text-muted-foreground">Looking for a greater challenge?</Label>
                   <Switch
                     id="time-limit"
                     checked={timeLimitEnabled}

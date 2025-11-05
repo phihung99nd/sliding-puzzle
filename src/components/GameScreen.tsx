@@ -90,7 +90,6 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
 
     setPieceSize(calculatedPieceSize)
     setGridContainerSize(calculatedGridSize)
-    console.log({viewportWidth, viewportHeight, availableWidth, availableHeight, containerPadding, totalGap, borderWidth, maxSizeByWidth, maxSizeByHeight, calculatedPieceSize, calculatedGridSize})
   }, [size])
 
   // Set up resize listeners
@@ -126,7 +125,8 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
   }, [calculateGridSize])
 
   useEffect(() => {
-    if (isGameOver) {
+    // Don't start timer if game is over or image is still loading
+    if (isGameOver || isImageLoading) {
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current)
         timerIntervalRef.current = null
@@ -159,7 +159,7 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
         timerIntervalRef.current = null
       }
     }
-  }, [isGameOver, settings.timeLimit])
+  }, [isGameOver, isImageLoading, settings.timeLimit])
 
   useEffect(() => {
     if (isSolved(puzzleState) && !isGameOver) {
@@ -218,7 +218,7 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          className="grid grid-cols-2 md:grid-cols-3 gap-4"
         >
           <Card>
             <CardContent>

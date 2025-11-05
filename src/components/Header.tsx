@@ -15,7 +15,7 @@ export function Header({ onHome }: HeaderProps) {
   return (
     <header className="w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <motion.div className="text-[30px] font-jackdrift bg-gradient-to-r from-primary via-cyan-500 to-emerald-500 bg-clip-text text-transparent" onClick={onHome}>
+        <motion.div className="text-[30px] font-jackdrift bg-gradient-to-r from-primary via-cyan-500 to-emerald-500 bg-clip-text text-transparent cursor-pointer" onClick={onHome}>
           {characters.map((char, index) => {
             return (
               <motion.span

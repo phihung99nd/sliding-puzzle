@@ -50,10 +50,10 @@ export function ResultScreen({
               <Trophy className="h-16 w-16 text-white" />
             </div>
           </motion.div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          <h1 className="md:text-[48px] text-[32px] font-bold bg-gradient-to-r from-yellow-400 via-orange-500 to-primary bg-clip-text text-transparent">
             Congratulations!
           </h1>
-          <p className="text-xl text-muted-foreground">
+          <p className="md:text-xl text-md text-muted-foreground">
             You completed the {settings.difficulty} puzzle!
           </p>
         </motion.div>
@@ -74,11 +74,9 @@ export function ResultScreen({
               </CardHeader>
               <CardContent>
                 <p className="text-4xl font-bold">{formatTime(timeTaken)}</p>
-                {settings.timeLimit && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Time limit: {formatTime(settings.timeLimit)}
-                  </p>
-                )}
+                <p className="h-5 text-sm text-muted-foreground mt-2">
+                  {settings.timeLimit && <>Time limit: {formatTime(settings.timeLimit)}</>}
+                </p>
               </CardContent>
             </Card>
           </motion.div>
@@ -137,7 +135,7 @@ export function ResultScreen({
           <Button
             size="lg"
             onClick={onPlayAgain}
-            className="px-8 bg-gradient-to-r from-primary via-purple-500 to-pink-500 hover:opacity-90"
+            className="px-8 bg-gradient-to-r from-primary via-cyan-500 to-emerald-500 hover:opacity-90"
           >
             Play Again
           </Button>

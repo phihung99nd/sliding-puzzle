@@ -108,7 +108,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
   }
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
+    const mins = seconds / 60
     return mins === 1 ? '1 minute' : `${mins} minutes`
   }
 
@@ -125,7 +125,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-[48px] font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent"
+            className="text-[48px] font-bold bg-gradient-to-r from-primary via-cyan-500 to-emerald-500 bg-clip-text text-transparent"
           >
             Sliding Puzzle Challenge
           </motion.h1>
@@ -195,9 +195,9 @@ export function StartScreen({ onStart }: StartScreenProps) {
                       setCroppedCustomUrl(null)
                       setCustomUrlError(null)
                     }}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 ${
+                    className={`aspect-square rounded-lg overflow-hidden border-1 ${
                       imageUrl === url && !customImageUrl && !uploadedImage
-                        ? 'border-primary ring-2 ring-primary'
+                        ? 'border-primary ring-1 ring-primary'
                         : 'border-border'
                     }`}
                   >
@@ -307,7 +307,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
           <Button
             size="lg"
             onClick={handleStart}
-            className="px-8 text-lg bg-gradient-to-r from-primary via-purple-500 to-pink-500 hover:opacity-90"
+            className="px-8 text-lg bg-gradient-to-r from-primary via-cyan-500 to-emerald-500 hover:opacity-90"
           >
             <Play className="mr-2 h-5 w-5" />
             Start Game

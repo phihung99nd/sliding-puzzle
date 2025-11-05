@@ -42,7 +42,7 @@ function App() {
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+        <Header onHome={handleQuit} />
         <main className="flex-1 py-8">
           {screen === 'start' && <StartScreen onStart={handleStart} />}
           {screen === 'game' && settings && (

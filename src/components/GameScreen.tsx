@@ -249,7 +249,7 @@ export function GameScreen({ settings, onComplete, onQuit }: GameScreenProps) {
                   <p className="text-sm text-muted-foreground">Time Remaining</p>
                   <p
                     className={`text-2xl font-bold ${
-                      remainingTime < 60 ? 'text-destructive' : ''
+                      remainingTime < ((settings.timeLimit ?? 0) / 3) ? 'text-destructive' : ''
                     }`}
                   >
                     {formatTime(remainingTime)}

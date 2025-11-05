@@ -20,10 +20,10 @@ export function getGridSize(difficulty: Difficulty): number {
 
 export function getTimeLimit(difficulty: Difficulty): number {
   const timeLimits: Record<Difficulty, number> = {
-    '3x3': 180,  // 3 minutes
-    '4x4': 300,  // 5 minutes
-    '5x5': 480,  // 8 minutes
-    '6x6': 900,  // 15 minutes
+    '3x3': 60,  // 1 minutes
+    '4x4': 90,  // 1.5 minutes
+    '5x5': 150,  // 2.5 minutes
+    '6x6': 240,  // 4 minutes
   }
   return timeLimits[difficulty]
 }
